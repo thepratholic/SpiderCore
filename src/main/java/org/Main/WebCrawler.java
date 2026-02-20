@@ -1,4 +1,4 @@
-package org.example;
+package org.Main;
 
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -38,6 +38,7 @@ public class WebCrawler {
         executorService.shutdown(); // We close the threadpool, so any worker (thread) should not consume any resources
 
         System.out.println("Time taken : " + (System.currentTimeMillis() - startTime)); // Tells how much time crawling gets compeleted in MS.
+        sc.close();
     }
 
     /* This simply does:
