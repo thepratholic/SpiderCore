@@ -67,7 +67,7 @@ public class CrawlerTask implements Runnable {
             /* Actual crawling — URLFetcher se links fetch karo
              * Ye network call hai — time lag sakta hai
              * Isliye ye thread pool mein hai — main thread block nahi hoga */
-            Set<String> links = urlFetcher.fetchLinks(url);
+            CrawlResult result = urlFetcher.fetchLinks(url);
 
             /* Page crawl hua successfully —
              * DB mein status update karo pending → visited
