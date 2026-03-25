@@ -34,7 +34,7 @@ public class CrawlerTask implements Runnable {
             Set<String> links = urlFetcher.fecthLinks(url);
 
             for(String link : links) {
-                if(urlStore.addUrl(link)) {
+                if(urlStore.addUrl(link, this.currentDepth)) {
                     phaser.register(); // We are telling to the phaser that, we have added one url , so now invoke one more task and increment the count by 1 as well.
 
                     // Now this method will get invoke and then it will be assigned to new thread in the thread pool
