@@ -8,60 +8,92 @@ import org.jsoup.select.Elements;
 import java.util.HashSet;
 import java.util.Set;
 
+/*
+ * URLFetcher — Ye class actual network call karta hai
+ * aur webpage ka data fetch karta hai.
+ *
+ * Kya karta hai:
+ * 1. URL pe connect karta hai (network call)
+ * 2. HTML document fetch karta hai
+ * 3. Title extract karta hai
+ * 4. Saare links extract karta hai
+ * 5. CrawlResult mein wrap karke return karta hai
+ *
+ * Real world example:
+ * Ye ek "scout" hai —
+ * Ek jagah jaata hai, information collect karta hai
+ * aur report (CrawlResult) lekar aata hai
+ */
 public class URLFetcher {
 
-    /* This method basically returns the set of urls which are present inside the url provided
-        in the function definition.
+    /*
+     * fetchLinks() — Ye method kisi bhi URL pe jaake
+     * uska title aur saare links fetch karta hai
+     *
+     * Pehle sirf links return hote the — Set<String>
+     * Ab CrawlResult return hota hai — title + links dono
+     *
+     * Typo bhi fix kiya — pehle "fecthLinks" tha 😅
      */
-    public Set<String> fetchLinks(String url) {
+    public CrawlResult fetchLinks(String url) {
         Set<String> links = new HashSet<>();
 
-        // when we fetch any data from any website, it is in the form of document.
-        // so this document will later hold the HTML of webpage.
+        /* Document — JSoup ka object jo poora HTML hold karta hai
+         * Jaise browser mein ek webpage load hoti hai
+         * waise ye object mein HTML load hoti hai */
         Document document = null;
 
-        // we are getting the HTML , but it is risky as we are doing the network call.
-        // So that is try/catch is used.
-        // Errors can be : URL might not exist, Server may be down, Timeout, 404 errors
         try {
-            // timeout() says to Jsoup that wait for max 5seconds for the server to respond.
-            // if it takes longer, than throw an error.
+            /* Jsoup.connect() — actual network call
+             * timeout(5000) — 5 seconds se zyada wait mat karo
+             * Agar server slow hai ya down hai toh exception aayega
+             *
+             * Errors jo aa sakte hain:
+             * - URL exist nahi karta (404)
+             * - Server down hai
+             * - Network timeout
+             * - SSL certificate invalid */
             document = Jsoup.connect(url).timeout(5000).get();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch URL: " + url + " → " + e.getMessage());
         }
 
-        System.out.println(document.text()); // It prints all the visible text from the webpage.
+        /* Title extract karo —
+         * document.title() — webpage ka <title> tag content
+         * Jaise browser tab pe jo naam dikhta hai
+         *
+         * Agar title empty ho toh "No Title" rakho —
+         * DB mein null save nahi karni */
+        String title = document.title().isEmpty() ? "No Title" : document.title();
 
-        // It grabs all the <a> tags (links) from the webpage that actually have an href attribute.
-        // So basically → all clickable links on that page.
-        // So JSoup returns a list of all valid hyperlink elements.
+        /* document.select("a[href]") —
+         * Saare <a> tags jo href attribute rakhte hain
+         * Ye saare clickable links hain webpage pe
+         *
+         * Example HTML: <a href="/about">About Us</a>
+         * Ye select ho jaayega */
         Elements anchorTags = document.select("a[href]");
 
-        // Element is the child class of Elements, and each link is the <a> element.
         for (Element link : anchorTags) {
-            // absUrl converts relative links to absolute links
-
-            // Example:
-
-            //If page URL = https://example.com/about
-            //And the link is <a href="/contact">Contact</a>
-            //Then: link.absUrl("href")
-            //becomes: https://example.com/contact
-
-            //JSoup automatically fills in the base URL
-            // Makes crawling way easier
+            /* absUrl("href") — relative URL ko absolute banata hai
+             *
+             * Example:
+             * Page URL = https://wikipedia.org/home
+             * Link href = /about
+             * absUrl result = https://wikipedia.org/about
+             *
+             * Ye zaroori hai kyunki crawler ko
+             * complete URL chahiye crawl karne ke liye */
             String extractedUrl = link.absUrl("href");
 
-            if(!extractedUrl.isEmpty()) {
+            if (!extractedUrl.isEmpty()) {
                 links.add(extractedUrl);
             }
-
-            /* We are doing this coz, Because our crawler needs actual URLs to push into:
-                Your BlockingQueue, ConcurrentHashMap visited set
-             */
         }
 
-        return links;
+        /* CrawlResult mein dono cheezein wrap karke return karo
+         * title — DB mein save hoga crawled_data mein
+         * links — in pe naye CrawlerTasks banenge */
+        return new CrawlResult(title, links);
     }
 }
