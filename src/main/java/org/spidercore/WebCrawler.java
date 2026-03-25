@@ -1,4 +1,4 @@
-package org.Main;
+package org.spidercore;
 
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;

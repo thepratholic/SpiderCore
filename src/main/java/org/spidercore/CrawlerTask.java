@@ -1,4 +1,4 @@
-package org.Main;
+package org.spidercore;
 
 import java.util.Set;
 import java.util.concurrent.Phaser;

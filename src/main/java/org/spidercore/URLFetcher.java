@@ -1,4 +1,4 @@
-package org.Main;
+package org.spidercore;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
