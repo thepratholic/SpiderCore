@@ -9,13 +9,15 @@ public class CrawlerTask implements Runnable {
     private final int maxDepth;
     private final int currentDepth;
     private final Phaser phaser;
+    private final DatabaseManager databaseManager;
 
-    public CrawlerTask(URLStore urlStore, URLFetcher urlFetcher, int maxDepth, int currentDepth, Phaser phaser) {
+    public CrawlerTask(URLStore urlStore, URLFetcher urlFetcher, int maxDepth, int currentDepth, Phaser phaser, DatabaseManager databaseManager) {
         this.urlStore = urlStore;
         this.urlFetcher = urlFetcher;
         this.maxDepth = maxDepth;
         this.currentDepth = currentDepth;
         this.phaser = phaser;
+        this.databaseManager = databaseManager;
     }
 
     @Override
@@ -38,7 +40,7 @@ public class CrawlerTask implements Runnable {
                     phaser.register(); // We are telling to the phaser that, we have added one url , so now invoke one more task and increment the count by 1 as well.
 
                     // Now this method will get invoke and then it will be assigned to new thread in the thread pool
-                    WebCrawler.submitTask(urlStore, urlFetcher, currentDepth + 1, maxDepth);
+                    WebCrawler.submitTask(urlStore, urlFetcher, currentDepth + 1, maxDepth, databaseManager);
                 }
             }
         }
