@@ -1,6 +1,5 @@
 package org.spidercore;
 
-import java.util.Set;
 import java.util.concurrent.Phaser;
 
 /*
@@ -86,7 +85,7 @@ public class CrawlerTask implements Runnable {
                 /* fetchLinks() se title access nahi hota directly
                  * isliye abhi links.size() se count save karenge
                  * title ke liye URLFetcher modify karenge aage */
-                databaseManager.saveCrawledData(urlId, "N/A", links.size());
+                databaseManager.saveCrawledData(urlId, result.getTitle(), result.getLinks().size());
             }
 
             /* Har link ke liye check karo —
@@ -96,7 +95,7 @@ public class CrawlerTask implements Runnable {
              * Ye BFS ka core logic hai —
              * Current level ke saare links process karo
              * phir next level pe jao */
-            for (String link : links) {
+            for (String link : result.getLinks()) {
 
                 /* addUrl() — 3 kaam karta hai:
                  * 1. RAM cache check (fast duplicate check)
