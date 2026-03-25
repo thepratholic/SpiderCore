@@ -13,7 +13,7 @@ public class URLFetcher {
     /* This method basically returns the set of urls which are present inside the url provided
         in the function definition.
      */
-    public Set<String> fecthLinks(String url) {
+    public Set<String> fetchLinks(String url) {
         Set<String> links = new HashSet<>();
 
         // when we fetch any data from any website, it is in the form of document.
