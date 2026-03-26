@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca6a1482-c566-49c8-b33f-5b786d83a380" name="Changes" comment="Changes made">
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/spidercore/CrawlerTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/spidercore/CrawlerTask.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/spidercore/WebCrawler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/spidercore/WebCrawler.java" afterDir="false" />
-    </list>
+    <list default="true" id="ca6a1482-c566-49c8-b33f-5b786d83a380" name="Changes" comment="Changes made" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -109,7 +104,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774510069401</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Changes made">
+      <option name="closed" value="true" />
+      <created>1774511641205</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1774511641205</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
