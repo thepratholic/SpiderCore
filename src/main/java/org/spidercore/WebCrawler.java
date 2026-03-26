@@ -86,6 +86,7 @@ public class WebCrawler {
         /* Main thread yahan ruk jaata hai —
          * Jab tak saare threads apna kaam khatam na karein
          * awaitAdvance() — "sab khatam hone tak ruko" */
+        phaser.arriveAndDeregister();
         phaser.awaitAdvance(phaser.getPhase());
 
         /* Thread pool band karo —
