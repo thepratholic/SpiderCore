@@ -29,16 +29,18 @@ public class CrawlerTask implements Runnable {
      * 1. URL ka status update karega (pending → visited/failed)
      * 2. Page ka data save karega (title, links count) */
     private final DatabaseManager databaseManager;
+    private final CrawlerStats crawlerStats;
 
     public CrawlerTask(URLStore urlStore, URLFetcher urlFetcher,
                        int maxDepth, int currentDepth,
-                       Phaser phaser, DatabaseManager databaseManager) {
+                       Phaser phaser, DatabaseManager databaseManager, CrawlerStats crawlerStats) {
         this.urlStore = urlStore;
         this.urlFetcher = urlFetcher;
         this.maxDepth = maxDepth;
         this.currentDepth = currentDepth;
         this.phaser = phaser;
         this.databaseManager = databaseManager;
+        this.crawlerStats = crawlerStats;
     }
 
     @Override
@@ -72,6 +74,8 @@ public class CrawlerTask implements Runnable {
              * DB mein status update karo pending → visited
              * Crash recovery ke liye zaroori hai ye */
             databaseManager.updateUrlStatus(url, "visited");
+
+            crawlerStats.incrementCrawled();
 
             /* Page ka data DB mein save karo —
              * url ka id dhundho pehle (foreign key ke liye)
@@ -114,7 +118,7 @@ public class CrawlerTask implements Runnable {
                      * Koi bhi available thread ye task uthayega */
                     WebCrawler.submitTask(urlStore, urlFetcher,
                                          currentDepth + 1, maxDepth,
-                                         databaseManager);
+                                         databaseManager, crawlerStats);
                 }
             }
 
@@ -128,6 +132,7 @@ public class CrawlerTask implements Runnable {
              * url hi nahi tha, DB update karne ki zarurat nahi */
             if (url != null) {
                 databaseManager.updateUrlStatus(url, "failed");
+                crawlerStats.incrementFailed();
             }
             System.out.println("Error crawling: " + url + " → " + e.getMessage());
 
