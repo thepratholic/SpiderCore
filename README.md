@@ -107,7 +107,7 @@ src/main/java/org/spidercore/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yourusername/SpiderCore.git
+git clone https://github.com/thepratholic/SpiderCore.git
 cd SpiderCore
 ```
 
