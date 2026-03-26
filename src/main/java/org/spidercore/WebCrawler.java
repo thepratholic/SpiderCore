@@ -65,7 +65,7 @@ public class WebCrawler {
          * khud bhi count mein hai
          * Agar 0 se start karein toh main thread
          * immediately aage badh jayega — wait nahi karega */
-        phaser = new Phaser(1);
+        phaser = new Phaser(0);
 
         /* newFixedThreadPool — exactly MAX_THREADS workers ready
          * Isse zyada threads kabhi nahi banenge
@@ -86,7 +86,7 @@ public class WebCrawler {
         /* Main thread yahan ruk jaata hai —
          * Jab tak saare threads apna kaam khatam na karein
          * awaitAdvance() — "sab khatam hone tak ruko" */
-        phaser.arriveAndDeregister();
+        // System.out.println("WAITING... phase: " + phaser.getPhase() + " unarrived: " + phaser.getUnarrivedParties());
         phaser.awaitAdvance(phaser.getPhase());
 
         /* Thread pool band karo —

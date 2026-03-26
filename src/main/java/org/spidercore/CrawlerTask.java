@@ -111,7 +111,6 @@ public class CrawlerTask implements Runnable {
                     /* Phaser ko batao — ek aur task aa raha hai
                      * Count badhao register() se
                      * Warna main thread wait karna band kar dega */
-                    phaser.register();
 
                     /* Naya task submit karo thread pool mein —
                      * currentDepth + 1 pass karo — ek level aur andar gaye
@@ -137,14 +136,7 @@ public class CrawlerTask implements Runnable {
             System.out.println("Error crawling: " + url + " → " + e.getMessage());
 
         } finally {
-            /* YE HAMESHA CHALEGA — exception aaye ya na aaye
-             *
-             * Phaser ko batao — mera kaam khatam hua
-             * Count ghataao arriveAndDeregister() se
-             *
-             * Agar ye nahi kiya toh —
-             * Main thread FOREVER wait karta rahega
-             * Program kabhi band nahi hoga! 😱 */
+            // System.out.println("PHASER COUNT: " + phaser.getUnarrivedParties()); // debug line
             phaser.arriveAndDeregister();
         }
     }
