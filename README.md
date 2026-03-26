@@ -1,166 +1,199 @@
-# 🚀 Multithreaded Web Crawler in Java
+# 🕷️ SpiderCore — Multithreaded Web Crawler
 
-A fully parallel, depth-controlled web crawler built using **Java**, **JSoup**, **ExecutorService**, **Phaser**, **ConcurrentHashMap**, and **BlockingQueue**.  
-This project demonstrates how to build a scalable, thread-safe crawler that extracts hyperlinks efficiently.
-
----
-
-## 📌 Features
-
-- Multithreaded crawling using a fixed thread pool  
-- Depth-based crawling (prevents infinite recursion)  
-- Thread-safe URL storage  
-- Duplicate URL prevention  
-- HTML parsing and link extraction using JSoup  
-- Dynamic task synchronization using Phaser  
-- Total crawl time measurement  
-- Clean and modular architecture  
+A production-inspired multithreaded web crawler built in Java that crawls websites concurrently, stores data persistently in MySQL, and supports crash recovery.
 
 ---
 
-## 🛠️ Technologies Used
+## 🚀 Features
 
-| Component | Purpose |
-|----------|---------|
-| **Java 17+** | Core language |
-| **JSoup** | HTML fetching & parsing |
-| **ExecutorService** | Thread pool for concurrent workers |
-| **Phaser** | Tracks active crawl tasks dynamically |
-| **ConcurrentHashMap** | Thread-safe visited URL storage |
-| **LinkedBlockingQueue** | Thread-safe crawling queue |
+- **Multithreaded Crawling** — Concurrent crawling using Java's `ExecutorService` with a configurable thread pool
+- **BFS Traversal** — Crawls URLs level by level using Breadth First Search up to a configurable depth
+- **MySQL Integration** — Persistent storage of URLs and crawled data, enabling crash recovery and resumable crawls
+- **Thread-Safe Design** — Uses `ConcurrentHashMap` as RAM cache and `LinkedBlockingQueue` as work buffer
+- **Phaser Synchronization** — Main thread waits for all crawling tasks to complete using Java's `Phaser`
+- **Crawler Stats** — Real-time performance metrics including pages/sec, total crawled, and failed URLs
+- **Crash Recovery** — On restart, pending URLs are preserved in DB and can be resumed
 
 ---
 
-## 📂 Project Structure
-
-```bash
-    src/main/java/org/example/
+## 🏗️ Architecture
+```
+WebCrawler (Controller)
     │
-    ├── WebCrawler.java # Entry point (setup, thread pool, phaser)
-    ├── CrawlerTask.java # Worker task executed by threads
-    ├── URLFetcher.java # JSoup-based HTML fetcher and link extractor
-    └── URLStore.java # Thread-safe URL manager (queue + visited set)
+    ├── URLStore (URL Management)
+    │       ├── ConcurrentHashMap (RAM Cache)
+    │       ├── LinkedBlockingQueue (Work Buffer)
+    │       └── DatabaseManager (Persistent Storage)
+    │
+    ├── URLFetcher (Network Layer)
+    │       └── CrawlResult (title + links)
+    │
+    ├── CrawlerTask (Worker - Runnable)
+    │       ├── Fetch links via URLFetcher
+    │       ├── Update DB status
+    │       └── Submit new tasks
+    │
+    ├── DatabaseManager (MySQL Layer)
+    │       ├── urls table
+    │       └── crawled_data table
+    │
+    └── CrawlerStats (Metrics)
+            └── AtomicInteger counters
 ```
 
+---
 
+## 🗄️ Database Schema
+```sql
+-- Tracks all URLs with their crawl status
+CREATE TABLE urls (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    url        VARCHAR(2048) NOT NULL,
+    status     ENUM('pending','visited','failed') DEFAULT 'pending',
+    depth      INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_url (url(500))
+);
 
+-- Stores crawled page data
+CREATE TABLE crawled_data (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    url_id      INT NOT NULL,
+    title       VARCHAR(1024),
+    links_found INT DEFAULT 0,
+    crawled_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (url_id) REFERENCES urls(id)
+);
+```
 
-# 🔍 How the Crawler Works
+---
 
-## 1️⃣ WebCrawler.java — Entry Point
+## ⚙️ Tech Stack
 
-- Takes user input:  
-  - Starting URL  
-  - Max depth  
-  - Number of worker threads  
-- Initializes:  
-  - `URLStore`  
-  - `URLFetcher`  
-  - `Phaser(1)` → registers main thread  
-  - `ExecutorService` (fixed thread pool)  
-- Pushes starting URL into the queue  
-- Submits the first crawling task (depth = 0)  
-- Waits for all tasks to finish:  
+| Technology | Usage |
+|------------|-------|
+| Java 21 | Core language |
+| ExecutorService | Thread pool management |
+| Phaser | Thread synchronization |
+| MySQL | Persistent URL & data storage |
+| JSoup | HTML parsing & link extraction |
+| JDBC | Java-MySQL connectivity |
+| Maven | Dependency management |
 
+---
+
+## 📁 Project Structure
+```
+src/main/java/org/spidercore/
+    ├── Main.java            → Entry point
+    ├── WebCrawler.java      → Controller, thread pool & phaser management
+    ├── CrawlerTask.java     → Runnable task executed by each thread
+    ├── URLStore.java        → URL management (cache + queue + DB)
+    ├── URLFetcher.java      → Network calls & HTML parsing via JSoup
+    ├── CrawlResult.java     → Value object (title + links)
+    ├── DatabaseManager.java → MySQL operations via JDBC
+    └── CrawlerStats.java    → Performance metrics tracking
+```
+
+---
+
+## 🛠️ Setup & Run
+
+### Prerequisites
+- Java 21+
+- Maven
+- MySQL 8.0+
+
+### 1. Clone the repo
 ```bash
-    phaser.awaitAdvance(phaser.getPhase());
+git clone https://github.com/yourusername/SpiderCore.git
+cd SpiderCore
 ```
 
-- Shuts down thread pool  
-- Prints execution time  
+### 2. Setup MySQL
+```sql
+CREATE DATABASE web_crawler;
+USE web_crawler;
 
----
+CREATE TABLE urls (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    url        VARCHAR(2048) NOT NULL,
+    status     ENUM('pending','visited','failed') DEFAULT 'pending',
+    depth      INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_url (url(500))
+);
 
-## 2️⃣ URLStore.java — URL Management
+CREATE TABLE crawled_data (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    url_id      INT NOT NULL,
+    title       VARCHAR(1024),
+    links_found INT DEFAULT 0,
+    crawled_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (url_id) REFERENCES urls(id)
+);
+```
 
-Handles all URL storage using:
+### 3. Configure DB credentials
+In `DatabaseManager.java`:
+```java
+private static final String URL = "jdbc:mysql://localhost:3306/web_crawler";
+private static final String USER = "root";
+private static final String PASSWORD = "your_password";
+```
 
-- **ConcurrentHashMap** → thread-safe visited set  
-- **LinkedBlockingQueue** → safe, unbounded URL queue  
-
-Methods:
-
-- `addUrl(url)` — adds unique URL (avoids duplicates)  
-- `getNextUrl()` — returns next URL from queue  
-- `isEmptyQueue()` — checks if queue is empty  
-
----
-
-## 3️⃣ URLFetcher.java — HTML Fetching & Parsing
-
-- Fetches page HTML using JSoup (`Jsoup.connect().get()`)  
-- Extracts all `<a href>` tags using CSS selector  
-- Converts relative links to absolute links  
-- Returns a **Set<String>** of unique extracted URLs  
-
----
-
-## 4️⃣ CrawlerTask.java — Worker Logic
-
-Each worker thread:
-
-1. Fetches next URL from queue  
-2. Validates depth & null URLs  
-3. Extracts links from the page  
-4. For every **new unique** link:
- - Add to URLStore  
- - Register new task in Phaser  
- - Submit new crawling task (with incremented depth)  
-5. Finally deregisters itself from Phaser  
-
-This ensures the system knows exactly when all tasks have completed.
-
-
-# How to Run
-
-### 1. Add JSoup Library
-Download JSoup jar:  
-https://jsoup.org/download
-
-Add to classpath.
-
-
-### 2. Compile
-
+### 4. Build & Run
 ```bash
-    javac -cp jsoup-1.17.2.jar -d out src/main/java/org/example/*.java
+mvn compile
+mvn exec:java -Dexec.mainClass="org.spidercore.Main"
 ```
 
-
-
-### 3. Run
-
-```bash
-    java -cp "out;jsoup-1.17.2.jar" org.example.WebCrawler
-
+### 5. Input
+```
+Enter your URL: https://wikipedia.org
+Enter the Depth of the crawler: 2
+Enter the number of workers: 4
 ```
 
+---
 
+## 📊 Sample Output
+```
+Database connected successfully!
+pool-1-thread-1 crawling: https://wikipedia.org
+pool-1-thread-2 crawling: https://en.wikipedia.org/
+...
 
-# 🚧 Current Limitations
-
-- JSoup does not render JavaScript  
-- No robots.txt validation  
-- No domain restrictions  
-- No rate limiting  
-- Not designed for massive-scale crawling  
+╔════════════════════════════════════╗
+║         CRAWLER STATS REPORT       ║
+╠════════════════════════════════════╣
+║  Total URLs crawled  : 150         ║
+║  Failed URLs         : 3           ║
+║  Total time          : 45.0s       ║
+║  Pages/sec           : 3.33        ║
+╚════════════════════════════════════╝
+```
 
 ---
 
-# 🔮 Future Enhancements
+## 💡 Key Design Decisions
 
-- Add allowed-domain filtering  
-- Add polite crawling (delay between requests)  
-- Retry logic for failed pages  
-- Save crawled output to file or DB  
-- Skip non-HTML content  
-- Add CLI flags or GUI interface  
+**Why ConcurrentHashMap + Database?**
+ConcurrentHashMap provides O(1) fast RAM-based duplicate checking during runtime. Database provides persistent storage for crash recovery — if the crawler stops mid-way, pending URLs survive and crawling can resume.
 
----
+**Why Phaser over CountDownLatch?**
+`CountDownLatch` requires knowing the total task count upfront. Since our crawler dynamically discovers new URLs during crawling, `Phaser` is ideal — it supports dynamic registration and deregistration of tasks at runtime.
 
-# 🤝 Contributing
-
-Contributions are welcome!  
-Feel free to open issues or submit pull requests.
+**Why LinkedBlockingQueue?**
+Acts as a thread-safe work buffer between URL discovery and crawling. Prevents all threads from hitting the database simultaneously — DB serves as source of truth, queue serves as controlled work distribution.
 
 ---
+<!-- 
+## 🔮 Future Improvements
+
+- [ ] Rate limiting / politeness policy per domain
+- [ ] `robots.txt` compliance
+- [ ] Retry logic with exponential backoff for failed URLs
+- [ ] REST API to monitor crawl progress in real-time -->
