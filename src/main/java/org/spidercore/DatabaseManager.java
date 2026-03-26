@@ -21,7 +21,7 @@ public class DatabaseManager {
     // web_crawler → humara database name
     private static final String URL = "jdbc:mysql://localhost:3306/web_crawler";
     private static final String USER = "root";
-    private static final String PASSWORD = "your_password_here"; // apna password daalna
+    private static final String PASSWORD = "Apple@2019()"; // apna password daalna
 
     // Connection object — ye actual "pipe" hai Java aur MySQL ke beech
     // Jaise phone call pe line open hoti hai, ye DB ke saath line open rakhta hai
