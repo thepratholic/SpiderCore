@@ -59,6 +59,7 @@ public class WebCrawler {
          * Bahar se milega — loosely coupled code */
         URLStore urlStore = new URLStore(databaseManager);
         URLFetcher urlFetcher = new URLFetcher();
+        CrawlerStats crawlerStats = new CrawlerStats();
 
         /* Phaser(1) — 1 isliye kyunki main thread
          * khud bhi count mein hai
@@ -80,7 +81,7 @@ public class WebCrawler {
         /* Pehla task submit karo depth 0 se
          * Ye ek domino effect start karega —
          * Ye task aur tasks submit karega, wo aur karengi */
-        submitTask(urlStore, urlFetcher, 0, MAX_DEPTH, databaseManager);
+        submitTask(urlStore, urlFetcher, 0, MAX_DEPTH, databaseManager, crawlerStats);
 
         /* Main thread yahan ruk jaata hai —
          * Jab tak saare threads apna kaam khatam na karein
@@ -91,6 +92,8 @@ public class WebCrawler {
          * Agar nahi karein toh threads resources consume karte rahenge
          * Jaise office mein sab chale gaye lekin lights band nahi ki */
         executorService.shutdown();
+
+        crawlerStats.printReport();
 
         /* DB connection band karo —
          * Open connection resources consume karta hai
@@ -117,10 +120,10 @@ public class WebCrawler {
      */
     public static void submitTask(URLStore urlStore, URLFetcher urlFetcher,
                                   int currentDepth, int maxDepth,
-                                  DatabaseManager databaseManager) {
+                                  DatabaseManager databaseManager, CrawlerStats crawlerStats) {
         phaser.register(); // ek aur task aa raha hai — count badhao
         executorService.submit(new CrawlerTask(urlStore, urlFetcher,
                                                maxDepth, currentDepth,
-                                               phaser, databaseManager));
+                                               phaser, databaseManager, crawlerStats));
     }
 }
