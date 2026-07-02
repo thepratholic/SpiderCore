@@ -44,19 +44,6 @@ public class DatabaseManager {
         }
     }
 
-    public boolean isVisited(String url) {
-        String query = "SELECT status FROM urls WHERE url = ? AND status = 'visited'";
-
-        try {
-            PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setString(1, url);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next(); // agar row mili toh visited hai
-        } catch (SQLException e) {
-            System.out.println("Error checking URL: " + e.getMessage());
-            return false;
-        }
-    }
 
     public void saveCrawledData(int urlId, String title, int linksFound) {
         String query = "INSERT INTO crawled_data (url_id, title, links_found) VALUES (?, ?, ?)";
