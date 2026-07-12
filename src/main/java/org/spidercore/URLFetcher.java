@@ -10,7 +10,14 @@ import java.util.Set;
 
 public class URLFetcher {
 
+    private final RobotsTxtChecker robotsTxtChecker = new RobotsTxtChecker();
+
     public CrawlResult fetchLinks(String url) {
+
+        if (!robotsTxtChecker.isAllowed(url)) {
+            throw new RuntimeException("Blocked by robots.txt: " + url);
+        }
+        
         Set<String> links = new HashSet<>();
 
         Document document = null;
