@@ -13,6 +13,8 @@ A production-inspired multithreaded web crawler built in Java that crawls websit
 - **Phaser Synchronization** — Main thread waits for all crawling tasks to complete using Java's `Phaser`
 - **Crawler Stats** — Real-time performance metrics including pages/sec, total crawled, and failed URLs
 - **Crash Recovery** — On restart, pending URLs are preserved in DB and can be resumed
+- **Robots.txt Compliance** — Respects `Disallow` rules for the `*` user-agent before crawling any URL, with per-domain caching to avoid repeated fetches
+- **Retry with Exponential Backoff** — Failed page fetches are retried up to 3 times with increasing delay (500ms, 1s, 2s) before being marked as failed
 
 ---
 
@@ -26,6 +28,8 @@ WebCrawler (Controller)
     │       └── DatabaseManager (Persistent Storage)
     │
     ├── URLFetcher (Network Layer)
+    │       ├── RobotsTxtChecker (robots.txt rules, per-domain cache)
+    │       ├── fetchWithRetry (exponential backoff, 3 attempts)
     │       └── CrawlResult (title + links)
     │
     ├── CrawlerTask (Worker - Runnable)
@@ -90,7 +94,8 @@ src/main/java/org/spidercore/
     ├── WebCrawler.java      → Controller, thread pool & phaser management
     ├── CrawlerTask.java     → Runnable task executed by each thread
     ├── URLStore.java        → URL management (cache + queue + DB)
-    ├── URLFetcher.java      → Network calls & HTML parsing via JSoup
+    ├── URLFetcher.java      → Network calls, retry logic & HTML parsing via JSoup
+    ├── RobotsTxtChecker.java → Fetches & parses robots.txt, caches disallowed paths per domain
     ├── CrawlResult.java     → Value object (title + links)
     ├── DatabaseManager.java → MySQL operations via JDBC
     └── CrawlerStats.java    → Performance metrics tracking
@@ -189,11 +194,15 @@ ConcurrentHashMap provides O(1) fast RAM-based duplicate checking during runtime
 **Why LinkedBlockingQueue?**
 Acts as a thread-safe work buffer between URL discovery and crawling. Prevents all threads from hitting the database simultaneously — DB serves as source of truth, queue serves as controlled work distribution.
 
+**Why cache robots.txt per domain?**
+Fetching and parsing `robots.txt` on every single URL request would add unnecessary network overhead. `RobotsTxtChecker` caches disallowed paths per domain in a `ConcurrentHashMap` the first time a domain is seen, so all subsequent URLs on that domain are checked against the cached rules instead of re-fetching. It fails open (allows the crawl) if `robots.txt` is unreachable or malformed, so a broken robots file doesn't halt crawling.
+
+**Why retry with exponential backoff?**
+Transient network errors (timeouts, temporary server issues) shouldn't immediately mark a URL as failed. `URLFetcher` retries up to 3 times with increasing delays (500ms → 1s → 2s) before giving up, which improves crawl success rate on flaky connections without hammering the target server.
+
 ---
-<!-- 
+
 ## 🔮 Future Improvements
 
 - [ ] Rate limiting / politeness policy per domain
-- [ ] `robots.txt` compliance
-- [ ] Retry logic with exponential backoff for failed URLs
-- [ ] REST API to monitor crawl progress in real-time -->
+- [ ] REST API to monitor crawl progress in real-time
